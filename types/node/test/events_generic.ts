@@ -93,6 +93,7 @@ declare const event5: "event5";
 
     result = events.EventEmitter.defaultMaxListeners;
 
+    // @ts-expect-error
     const promise: Promise<any[]> = events.once(new events.EventEmitter<T>(), "error");
 
     result = emitter.getMaxListeners();
@@ -111,7 +112,12 @@ declare const event5: "event5";
 
 {
     let result: Promise<number[]>;
-
+    const anyEmitter = new events.EventEmitter();
+    type Test = typeof emitter extends NodeJS.EventEmitter<infer E> ? E : never;
+    type X = Test['event1'];
+    const z: X = "as";
+    const x = events.once(anyEmitter, event1);
+    const y = events.once(emitter, event1);
     result = events.once(emitter, event1);
     result = events.once(emitter, event2);
     result = events.once(emitter, event3);

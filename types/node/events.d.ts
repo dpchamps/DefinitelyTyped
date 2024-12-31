@@ -100,12 +100,14 @@ declare module "events" {
         lowWaterMark?: number | undefined;
     }
     interface EventEmitter<T extends EventMap<T> = DefaultEventMap> extends NodeJS.EventEmitter<T> {}
-    type EventMap<T> = Record<keyof T, any[]> | DefaultEventMap;
+    type EventMap<T> = RecordOf<T> | DefaultEventMap;
     type DefaultEventMap = [never];
     type AnyRest = [...args: any[]];
     type Args<K, T> = T extends DefaultEventMap ? AnyRest : (
         K extends keyof T ? T[K] : never
     );
+    type RecordOf<T> = [T] extends [Record<infer K, [infer V]>] ? Record<K, [V]> : [T] extends [Record<infer K, Array<infer V>>] ? Record<K, Array<V>> : never;
+    type EventMapKey<T> = T extends DefaultEventMap ? string | symbol : keyof T
     type Key<K, T> = T extends DefaultEventMap ? string | symbol : K | keyof T;
     type Key2<K, T> = T extends DefaultEventMap ? string | symbol : K & keyof T;
     type Listener<K, T, F> = T extends DefaultEventMap ? F : (
@@ -116,7 +118,9 @@ declare module "events" {
     );
     type Listener1<K, T> = Listener<K, T, (...args: any[]) => void>;
     type Listener2<K, T> = Listener<K, T, Function>;
-
+    type EventMapValue<T extends EventMap<T>, K> =
+        T extends DefaultEventMap ? any[] :
+            K extends keyof T ? T[K] : never
     /**
      * The `EventEmitter` class is defined and exposed by the `node:events` module:
      *
@@ -214,11 +218,17 @@ declare module "events" {
          * ```
          * @since v11.13.0, v10.16.0
          */
-        static once(
-            emitter: NodeJS.EventEmitter,
-            eventName: string | symbol,
+        // static once(
+        //     emitter: NodeJS.EventEmitter,
+        //     eventName: string | symbol,
+        //     options?: StaticEventEmitterOptions,
+        // ): Promise<any[]>;
+
+        static once<T extends EventMap<T> = DefaultEventMap, K extends EventMapKey<T> = any>(
+            emitter: NodeJS.EventEmitter<T>,
+            eventName: K,
             options?: StaticEventEmitterOptions,
-        ): Promise<any[]>;
+        ): Promise<EventMapValue<T, K>>;
         static once(emitter: EventTarget, eventName: string, options?: StaticEventEmitterOptions): Promise<any[]>;
         /**
          * ```js
